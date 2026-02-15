@@ -45,5 +45,21 @@ def download_email_attachment(email_id: str, folder: str) -> dict:
         return {"error": str(e)}
 
 
+@mcp.tool()
+def send_email(to: str, subject: str, content: str) -> dict:
+    """Send an email to the specified recipient.
+
+    Args:
+        to: Recipient email address.
+        subject: Email subject line.
+        content: Plain text email body.
+    """
+    try:
+        email_account, password = _get_credentials()
+        return imap_client.send_email(email_account, password, to, subject, content)
+    except Exception as e:
+        return {"error": str(e)}
+
+
 if __name__ == "__main__":
     mcp.run()

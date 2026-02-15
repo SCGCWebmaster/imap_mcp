@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "imap-email": {
+      "type": "stdio",
+      "command": "/Users/liquan/code/imap_mcp/venv/bin/python",
+      "args": [
+        "server.py"
+      ],
+      "env": {
+        "EMAIL_ACCOUNT": "webmaster@gliding.com.au",
+        "APP_PASS": "aaxz txvd rmhm dnkg"
+      }
+    }
+  }
+}

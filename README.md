@@ -10,7 +10,6 @@ IMAP Email MCP Server for Claude Code. Exposes Gmail IMAP functionality as two M
 ## Setup
 
 ```bash
-cd /Users/liquan/code/imap_mcp
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -25,10 +24,10 @@ cp .env.example .env
 ## Adding to Claude Code
 
 ```bash
-claude mcp add --transport stdio --scope user imap-email \
+claude mcp add --transport stdio --scope project imap-email \
   -e EMAIL_ACCOUNT=your_email@gmail.com \
   -e APP_PASS="your_app_password" \
-  -- /Users/liquan/code/imap_mcp/venv/bin/python /Users/liquan/code/imap_mcp/server.py
+  -- ~/code/imap_mcp/venv/bin/python ~/code//imap_mcp/server.py
 ```
 
 Options:
@@ -45,3 +44,10 @@ After adding, restart Claude Code and verify with `/mcp`.
 | `APP_PASS` | Yes | Gmail app password |
 | `IMAP_SERVER` | No | IMAP server (default: `imap.gmail.com`) |
 | `IMAP_PORT` | No | IMAP port (default: `993`) |
+
+
+
+claude mcp add --transport stdio --scope project imap-email \
+  -e EMAIL_ACCOUNT=webmaster@gliding.com.au \
+  -e APP_PASS="aaxz txvd rmhm dnkg" \
+  -- ~/code/imap_mcp/venv/bin/python server.py

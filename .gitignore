@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 downloads/
 .DS_Store
+email.process.log

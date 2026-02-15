@@ -1,9 +1,12 @@
 """IMAP email client - fetch unread emails and download attachments."""
 import email
 import os
+import smtplib
 from contextlib import contextmanager
 from email.header import decode_header
 from email.message import Message
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from imapclient import IMAPClient
 
@@ -123,6 +126,46 @@ def _resolve_email_id(client: IMAPClient, email_id: str) -> int:
 
 # --- Public API ---
 
+def get_emails_from_senders_since(
+    email_account: str,
+    password: str,
+    sender_emails: list[str],
+    since_date: str,
+) -> list[dict]:
+    """Fetch emails from specified senders since a given date (regardless of read status).
+
+    since_date: IMAP date string, e.g. '14-Feb-2026'
+    Returns: [{email_id, message_id, subject, from, date, attachment_filenames}]
+    """
+    results = []
+
+    with _imap_connection(email_account, password) as client:
+        client.select_folder("INBOX")
+
+        for from_addr in sender_emails:
+            message_ids = client.search(["FROM", from_addr, "SINCE", since_date])
+
+            if not message_ids:
+                continue
+
+            response = client.fetch(message_ids, ["RFC822"])
+
+            for msg_id, data in response.items():
+                raw_bytes = data[b"RFC822"]
+                msg = email.message_from_bytes(raw_bytes)
+
+                results.append({
+                    "email_id": str(msg_id),
+                    "message_id": msg.get("Message-ID", "").strip(),
+                    "subject": _decode_mime_header(msg.get("Subject", "")),
+                    "from": _decode_mime_header(msg.get("From", "")),
+                    "date": _decode_mime_header(msg.get("Date", "")),
+                    "attachment_filenames": _get_attachment_filenames(msg),
+                })
+
+    return results
+
+
 def get_unread_emails(email_account: str, password: str, sender_emails: list[str]) -> list[dict]:
     """Fetch unread emails from specified senders.
 
@@ -225,4 +268,37 @@ def download_email(email_account: str, password: str, email_id: str, folder: str
         "subject": subject,
         "folder_path": folder_path,
         "downloaded_files": downloaded_files,
+    }
+
+
+def send_email(
+    email_account: str,
+    password: str,
+    to: str,
+    subject: str,
+    content: str,
+) -> dict:
+    """Send an email via SMTP.
+
+    Returns: {success, to, subject, message}
+    """
+    smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+
+    msg = MIMEMultipart()
+    msg["From"] = email_account
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg.attach(MIMEText(content, "plain"))
+
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(email_account, password)
+        server.sendmail(email_account, to, msg.as_string())
+
+    return {
+        "success": True,
+        "to": to,
+        "subject": subject,
+        "message": "Email sent successfully.",
     }
